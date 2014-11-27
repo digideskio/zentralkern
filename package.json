@@ -1,0 +1,27 @@
+{
+  "name": "zentralkern",
+  "version": "0.0.1",
+  "description": "core of zentrale",
+  "main": "index.coffee",
+  "scripts": {
+    "test": "make test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/fdrei/zentralkern.git"
+  },
+  "keywords": [
+    "zen"
+  ],
+  "author": "fdrei",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/fdrei/zentralkern/issues"
+  },
+  "homepage": "https://github.com/fdrei/zentralkern",
+  "dependencies": {
+    "javascript-state-machine": "^2.3.2",
+    "event-stream": "^3.1.7"
+  },
+  "devDependencies": {}
+}
