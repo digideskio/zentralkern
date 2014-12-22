@@ -22,7 +22,8 @@
   "dependencies": {
     "javascript-state-machine": "^2.3.2",
     "pull-stream": "^2.26.0",
-    "stream-to-pull-stream": "^1.6.0"
+    "stream-to-pull-stream": "^1.6.0",
+    "eventemitter2": "^0.4.14"
   },
   "devDependencies": {}
 }

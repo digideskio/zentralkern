@@ -2,7 +2,16 @@
 
 StateMachine = require('javascript-state-machine').StateMachine
 
-class Person
+EventEmitter = require('eventemitter2').EventEmitter2
+
+class Person extends EventEmitter
+
+  persons = []
+
+  add: (data)->
+    persons.push data
+    @emit 'add', data
+    return data
 
   constructor: (data)->
     @[key] = value for key, value of data
@@ -22,4 +31,4 @@ StateMachine.create
     { name: 'clear', from: 'yellow', to: 'green' }
   ]
 
-module.exports = Person
+module.exports = new Person
