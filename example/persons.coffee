@@ -1,24 +1,22 @@
+require("#{__dirname}/../src/core") (err, Person, Message, Plugin) ->
+  return console.log 'err', err if err
+  p1 = Person.add
+    name: 'Krispin'
 
-{Person} = require "#{__dirname}/../src/core"
+  p2 = Person.add
+    name: 'Burkhard'
 
-Person.on 'add', (p)->
-  console.log 'Add person:'
-  console.log p
+  p3 = Person.add
+    name: 'Patrick'
 
-p1 = Person.add
-  name: 'Krispin'
+# Person.on 'add', (p)->
+#   console.log 'Add person:'
+#   console.log p
+  #
 
-p2 = Person.add
-  name: 'Burkhard'
-
-p3 = Person.add
-  name: 'Patrick'
-
-
-
-pull = require 'pull-stream'
-
-savePerson = require "#{__dirname}/../src/savePerson"
+# pull = require 'pull-stream'
+#
+# savePerson = require "#{__dirname}/../src/savePerson"
 
 # handle persons
 # pull(
