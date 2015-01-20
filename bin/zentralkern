@@ -1,0 +1,4 @@
+#!/usr/bin/env node 
+require('coffee-script/register');
+opts = {}
+cli = require('../src/cli')(opts);
