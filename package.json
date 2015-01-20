@@ -21,10 +21,12 @@
   },
   "homepage": "https://github.com/fdrei/zentralkern",
   "dependencies": {
+    "async": "^0.9.0",
     "coffee-script": "^1.8.0",
     "commander": "^2.6.0",
     "eventemitter2": "^0.4.14",
     "javascript-state-machine": "^2.3.2",
+    "nedb": "^1.1.1",
     "pull-stream": "^2.26.0",
     "stream-to-pull-stream": "^1.6.0"
   },
