@@ -17,10 +17,11 @@ fs.readdir path, (err, files) ->
     return cb() unless name[-6..] is 'coffee' or name[-2..] is 'js'
 
     plugin = require "#{path}/#{name}"
-    plugins[plugin.name] = plugin.init Person, Message, (err) ->
+    plugin.init Person, Message, (err, pluginInterface) ->
       return cb err if err
 
       console.log "plugin #{plugin.name} initialized"
+      plugins[plugin.name] = pluginInterface || {}
       cb()
 
   async.each files, readPlugin, (err) ->
