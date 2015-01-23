@@ -1,3 +1,4 @@
+
 require("#{__dirname}/../src/core") (err, Person, Message, Plugin) ->
   return console.log 'err', err if err
   p1 = Person.add
