@@ -32,7 +32,10 @@
     "q": "^1.1.2",
     "stream-to-pull-stream": "^1.6.0"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "debug": "^2.1.1",
+    "mocha": "^2.1.0"
+  },
   "preferGlobal": "true",
   "bin": {
     "zentralkern": "./bin/zentralkern",
