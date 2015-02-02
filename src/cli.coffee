@@ -1,6 +1,6 @@
 # file: src/cli.coffee
 
-debug = require('debug')('cli')
+debug = require('debug')('zentralkern:cli')
 program = require 'commander'
 pkg = require "#{__dirname}/../package.json"
 
@@ -11,15 +11,21 @@ Person = null
 loadCore = (done)->
   require("#{__dirname}/../src/core") done
 
-showPlugin = (plugin)->
-  console.log "#{plugin.name}"
+showPlugin = (name, plugin)->
+  console.log "#{name}"
+
+execPlugin = (core)->
+  {Plugin} = core
+  return (name, action)->
+    debug "exec #{action} of plugin #{name}"
+    Plugin.get(name)[action]()
 
 getAllPlugins = (core)->
   { Plugin } = core
   return (program)->
     debug "get all installed plugins"
     plugins = Plugin.getAll()
-    showPlugin plugin for name, plugin of plugins
+    showPlugin name, pluginInterface for name, pluginInterface of plugins
 
 
 module.exports = (opts)->
@@ -35,5 +41,11 @@ module.exports = (opts)->
       .command 'plugins'
       .description 'get all installed plugins'
       .action getAllPlugins core
+
+    program
+      .command 'plugin <name> <action>'
+      .option '-p, --peppers', 'Add pepper'
+      .description 'execute action of plugin'
+      .action execPlugin core
 
     program.parse(process.argv)

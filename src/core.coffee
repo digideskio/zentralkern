@@ -10,15 +10,14 @@ Person = require "#{__dirname}/person"
 Message = require "#{__dirname}/message"
 Plugin = require "#{__dirname}/plugin"
 
-
 readPlugin = (name, done) ->
+  debug "#{name}"
   return done null unless name[-6..] is 'coffee' or name[-2..] is 'js'
   plugin = require "#{pluginPath}/#{name}"
-  plugin.init Person, Message, (err) ->
-    return done err if err
+  plugin.init Person, Message, (err, pluginInterface) ->
     debug "plugin #{plugin.name} initialized"
-    Plugin.add plugin
-    done()
+    Plugin.add plugin.name, pluginInterface
+    done err, pluginInterface
 
 loadPlugins = (done)->
   debug "try to read plugins in #{pluginPath}"
