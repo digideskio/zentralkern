@@ -32,3 +32,6 @@ node_modules
 .*.swp
 
 db/
+
+config/*.json
+!config/default.json

@@ -23,7 +23,8 @@ initDB = (entity, cb) ->
 
 module.exports =
   name: 'persist'
-  init: (Person, Message, done) ->
+  init: (core, config, done) ->
+    { Person, Message } = core
     async.each [Person, Message], initDB, (err) ->
       return done err if err
       done()

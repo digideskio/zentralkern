@@ -12,13 +12,21 @@ loadCore = (done)->
   require("#{__dirname}/../src/core") done
 
 showPlugin = (name, plugin)->
-  console.log "#{name}"
+  line =
+    name: name
+  line.version = plugin.version() if plugin.version
+  console.log line
 
 execPlugin = (core)->
   {Plugin} = core
-  return (name, action)->
+  # register options and commands of plugins
+  plugins = Plugin.getAll()
+  return (name, action, options)->
     debug "exec #{action} of plugin #{name}"
-    Plugin.get(name)[action]()
+    p = Plugin.get(name)
+    for c in p.commands
+      if c.name() == action
+        c.parent.emit action
 
 getAllPlugins = (core)->
   { Plugin } = core
@@ -44,8 +52,9 @@ module.exports = (opts)->
 
     program
       .command 'plugin <name> <action>'
-      .option '-p, --peppers', 'Add pepper'
+      .alias 'p'
       .description 'execute action of plugin'
+      .option '-p, --peppers', 'Add pepper'
       .action execPlugin core
 
     program.parse(process.argv)

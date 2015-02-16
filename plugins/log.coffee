@@ -2,7 +2,8 @@ debug = require('debug')('log')
 
 module.exports =
   name: 'log'
-  init: (Person, Message, done) ->
+  init: (core, config, done) ->
+    { Person, Message } = core
     Person.on 'add', (data) ->
       debug 'person added', data
 

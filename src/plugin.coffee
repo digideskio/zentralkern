@@ -18,7 +18,7 @@ class Plugin extends EventEmitter
 
   getAll: ->
     debug "get all plugins"
-    #return clones
-    return JSON.parse(JSON.stringify(@plugins))
+    #return clones?
+    return @plugins
 
 module.exports = new Plugin

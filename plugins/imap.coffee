@@ -73,5 +73,5 @@ connect = (data) ->
 
 module.exports =
   name: 'imap'
-  init: (Person, Message, done) ->
+  init: (core, config, done) ->
     done null, connect: connect

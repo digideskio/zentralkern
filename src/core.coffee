@@ -1,22 +1,26 @@
 # file: src/core.coffee
 
-debug = require('debug')('core')
+debug = require('debug')('zentralkern:core')
 fs = require 'fs'
 async = require 'async'
 
 pluginPath = "#{__dirname}/../plugins"
 
-Person = require "#{__dirname}/person"
-Message = require "#{__dirname}/message"
-Plugin = require "#{__dirname}/plugin"
+config = require "#{__dirname}/../config/dev.json"
+
+core =
+  Person: require "#{__dirname}/person"
+  Message: require "#{__dirname}/message"
+  Plugin: require "#{__dirname}/plugin"
 
 readPlugin = (name, done) ->
   debug "#{name}"
   return done null unless name[-6..] is 'coffee' or name[-2..] is 'js'
-  plugin = require "#{pluginPath}/#{name}"
-  plugin.init Person, Message, (err, pluginInterface) ->
+  plugin = require("#{pluginPath}/#{name}")
+  opts = config.plugins[plugin.name]
+  plugin.init core, opts, (err, pluginInterface) ->
     debug "plugin #{plugin.name} initialized"
-    Plugin.add plugin.name, pluginInterface
+    core.Plugin.add plugin.name, pluginInterface
     done err, pluginInterface
 
 loadPlugins = (done)->
@@ -28,6 +32,6 @@ loadPlugins = (done)->
       debug "all plugins loaded"
       done null
 
-module.exports = (done) ->
+module.exports = (done)->
   loadPlugins (err)->
-    done err, {Plugin, Message, Person}
+    done err, core
