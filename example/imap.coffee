@@ -1,7 +1,8 @@
-require("#{__dirname}/../src/core") (err, Person, Message, Plugin) ->
+require("#{__dirname}/../src/core") (err, core) ->
+  { Person, Message, Plugin } = core
   return console.log 'err', err if err
 
-  con = Plugin('imap').connect({    
+  con = Plugin.get('imap').connect({
     user: process.env.USER
     password: process.env.PASS
     host: 'imap.gmail.com'
