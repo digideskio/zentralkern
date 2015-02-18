@@ -28,6 +28,7 @@ node_modules
 .lock-wscript
 
 #plugins
+plugins/zentrale-rss
 
 .*.swp
 
