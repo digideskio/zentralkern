@@ -1,4 +1,4 @@
-# file: src/Message.coffee
+# file: src/message.coffee
 
 EventEmitter = require('eventemitter2').EventEmitter2
 

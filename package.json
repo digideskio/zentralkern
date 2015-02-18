@@ -22,17 +22,25 @@
   "homepage": "https://github.com/fdrei/zentralkern",
   "dependencies": {
     "async": "^0.9.0",
+    "charm": "^1.0.0",
+    "cli-table": "^0.3.1",
     "coffee-script": "^1.8.0",
+    "colors": "^1.0.3",
     "commander": "^2.6.0",
     "eventemitter2": "^0.4.14",
     "imap": "^0.8.14",
     "javascript-state-machine": "^2.3.2",
+    "moment": "^2.9.0",
     "nedb": "^1.1.1",
+    "node-hipchat": "^0.4.5",
     "pull-stream": "^2.26.0",
     "q": "^1.1.2",
     "stream-to-pull-stream": "^1.6.0"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "debug": "^2.1.1",
+    "mocha": "^2.1.0"
+  },
   "preferGlobal": "true",
   "bin": {
     "zentralkern": "./bin/zentralkern",

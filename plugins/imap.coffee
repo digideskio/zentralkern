@@ -1,3 +1,5 @@
+debug = require('debug')('zentralkern:plugin:imap')
+
 Imap = require 'imap'
 Q = require 'q'
 
@@ -52,6 +54,7 @@ get = (imap, offset = 0, length = 1) ->
   return deferred.promise
 
 connect = (data) ->
+  debug "try to connect..."
   imap = new Imap data
   deferred = Q.defer()
 
@@ -68,7 +71,7 @@ connect = (data) ->
   imap.connect()
   return deferred.promise
 
-module.exports = 
+module.exports =
   name: 'imap'
-  init: (Person, Message, done) ->
+  init: (core, config, done) ->
     done null, connect: connect

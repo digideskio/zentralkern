@@ -1,34 +1,37 @@
 # file: src/core.coffee
+
+debug = require('debug')('zentralkern:core')
 fs = require 'fs'
 async = require 'async'
 
-Person = require "#{__dirname}/person"
-Message = require "#{__dirname}/message"
+pluginPath = "#{__dirname}/../plugins"
 
-plugins = {}
-path = "#{__dirname}/../plugins"
-done = {}
+config = require "#{__dirname}/../config/dev.json"
 
-# get in the plugins
-fs.readdir path, (err, files) ->
-  return console.log 'err', err if err
+core =
+  Person: require "#{__dirname}/person"
+  Message: require "#{__dirname}/message"
+  Plugin: require "#{__dirname}/plugin"
 
-  readPlugin = (name, cb) ->
-    return cb() unless name[-6..] is 'coffee' or name[-2..] is 'js'
+readPlugin = (name, done) ->
+  debug "#{name}"
+  return done null unless name[-6..] is 'coffee' or name[-2..] is 'js'
+  plugin = require("#{pluginPath}/#{name}")
+  opts = config.plugins[plugin.name]
+  plugin.init core, opts, (err, pluginInterface) ->
+    debug "plugin #{plugin.name} initialized"
+    core.Plugin.add plugin.name, pluginInterface
+    done err, pluginInterface
 
-    plugin = require "#{path}/#{name}"
-    plugin.init Person, Message, (err, pluginInterface) ->
-      return cb err if err
-
-      console.log "plugin #{plugin.name} initialized"
-      plugins[plugin.name] = pluginInterface || {}
-      cb()
-
-  async.each files, readPlugin, (err) ->
+loadPlugins = (done)->
+  debug "try to read plugins in #{pluginPath}"
+  fs.readdir pluginPath, (err, files) ->
     return done err if err
+    async.each files, readPlugin, (err) ->
+      return done err if err
+      debug "all plugins loaded"
+      done null
 
-    console.log 'plugins loaded'
-    done null, Person, Message, (name) -> return plugins[name]
-
-module.exports = (cb) ->
-  done = cb
+module.exports = (done)->
+  loadPlugins (err)->
+    done err, core

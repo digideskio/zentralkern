@@ -1,4 +1,6 @@
-require("#{__dirname}/../src/core") (err, Person, Message, Plugin) ->
+
+require("#{__dirname}/../src/core") (err, core) ->
+  { Person, Message, Plugin } = core
   return console.log 'err', err if err
   p1 = Person.add
     name: 'Krispin'
