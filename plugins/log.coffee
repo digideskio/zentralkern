@@ -1,13 +1,12 @@
-debug = require('debug')('log')
+debug = require('debug')('zentralkern:plugins:log')
 
 module.exports =
   name: 'log'
+  attach: (core)->
+    debug 'attach'
+    core.on '*', (data)->
+      debug 'Event', data
   init: (core, config, done) ->
-    { Person, Message } = core
-    Person.on 'add', (data) ->
-      debug 'person added', data
-
-    Message.on 'add', (data) ->
-      debug 'message added', data
-
     done()
+  detach: (core)->
+    debug 'detach'
