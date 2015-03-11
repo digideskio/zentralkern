@@ -1,5 +1,5 @@
 
-debug = require('debug')('persist')
+debug = require('debug')('zentralkern:plugin:persist')
 
 Datastore = require 'nedb'
 async = require 'async'
@@ -23,8 +23,13 @@ initDB = (entity, cb) ->
 
 module.exports =
   name: 'persist'
+  version: '0.0.1'
+  attach: (service)->
+    debug 'attach'
+
   init: (core, config, done) ->
-    { Person, Message } = core
-    async.each [Person, Message], initDB, (err) ->
-      return done err if err
-      done()
+    { persons, messages } = core
+    debug "initialized"
+    done null
+    # async.each [persons, messages], initDB, (err) ->
+    #   done err

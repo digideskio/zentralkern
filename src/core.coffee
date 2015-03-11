@@ -1,4 +1,5 @@
 # file: src/core.coffee
+
 debug = require('debug')('zentralkern:core')
 fs = require 'fs'
 async = require 'async'
@@ -6,24 +7,30 @@ EventEmitter = require('eventemitter2').EventEmitter2
 
 class Core extends EventEmitter
 
-  constructor: ->
-    # config = require "#{__dirname}/../config/dev.json"
+  constructor: (opts)->
+    debug 'new Core()'
+    @plugins = require("#{__dirname}/plugin_service")()
+    # @persons:  require("#{__dirname}/person_service")()
+    # @messages: require("#{__dirname}/message_service")()
     super
       wildcard: true
       delimiter: '::'
 
-    @plugin_opts =
-      path: "#{__dirname}/../plugins"
+  init: (@config, done)->
+    debug 'init'
+    async.parallel
+      plugins:  (cb)=>
+        @plugins.init
+          core: @
+          plugins_path: "#{__dirname}/../plugins" # plugins path
+        , (err)->
+          debug err if err
+          cb err
 
-    @persons = require "#{__dirname}/person_service"
-    @messages = require "#{__dirname}/message_service"
-    @plugins = require "#{__dirname}/plugin_service"
-
-  init: (opts, done)->
-    @plugins.init @, @plugin_opts, (err)=>
+    ,(err)=>
+      debug 'initialized'
       done err, @
 
-module.exports = (done)->
-  opts = {}
-  core = new Core()
-  core.init opts, done
+module.exports = (opts)->
+  debug 'exports'
+  new Core opts

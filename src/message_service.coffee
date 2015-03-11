@@ -1,8 +1,8 @@
-# file: src/message.coffee
-
+# file: src/message_service.coffee
+debug = require('debug')('zentralkern:messages')
 EventEmitter = require('eventemitter2').EventEmitter2
 
-class Message extends EventEmitter
+class MessageService extends EventEmitter
 
   messages = []
 
@@ -15,4 +15,5 @@ class Message extends EventEmitter
     #return clones
     return JSON.parse(JSON.stringify(messages))
 
-module.exports = new Message
+module.exports = (opts, done)->
+  done null, new MessageService opts

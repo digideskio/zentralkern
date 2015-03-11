@@ -1,0 +1,7 @@
+{
+  "plugins": {
+    "hipchat": {
+      "api_key": "<your admin api key>"
+    }
+  }
+}

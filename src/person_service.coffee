@@ -1,7 +1,9 @@
-# file: src/person.coffee
+# file: src/person_service.coffee
+debug = require('debug')('zentralkern:persons')
 EventEmitter = require('eventemitter2').EventEmitter2
 
-class Person extends EventEmitter
+class PersonService extends EventEmitter
+
   persons = []
 
   add: (data)->
@@ -9,4 +11,6 @@ class Person extends EventEmitter
     @emit 'add', data
     return data
 
-module.exports = new Person
+module.exports = (opts, done)->
+  debug 'exports', opts
+  done null, new PersonService opts

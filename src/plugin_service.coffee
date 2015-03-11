@@ -1,45 +1,87 @@
 # file: src/plugin_service.coffee
+
 debug = require('debug')('zentralkern:plugins')
 EventEmitter = require('eventemitter2').EventEmitter2
+fs = require 'fs'
+async = require 'async'
+
+module.exports = (opts)->
+  debug 'exports'
+  return new PluginService opts
 
 class PluginService extends EventEmitter
 
-  plugins: {}
+  constructor: (opts)->
+    debug 'new PluginService'
+    @plugins = {}
+    @initialized = false
+    super
+      wildcard: true
+      delimiter: '::'
 
-  init: (@core, @opts, done)->
-    done()
+  init: (opts, done)->
+    debug 'init'
+    { @core, @plugins_path } = opts
+    @loadPlugins (err, result)=>
+      @initialized = true
+      @emit 'error::plugins::load', err if err
+      @emit 'init::plugins'
+      done err, result
 
-  readPlugin: (name, done) ->
-    debug "#{name}"
+  loadPluginFromFile: (name, done) ->
     return done null unless name[-6..] is 'coffee' or name[-2..] is 'js'
-    plugin = require("#{pluginPath}/#{name}")
-    opts = config.plugins[plugin.name]
-    plugin.init core, opts, (err, pluginInterface) ->
-      debug "plugin #{plugin.name} initialized"
-      core.Plugin.add plugin.name, pluginInterface
-      done err, pluginInterface
+    debug "load plugin from #{name}"
+    plugin = require("#{@plugins_path}/#{name}")
+    done null, plugin
+
+  loadPluginsFromPath: (path, done)->
+    debug "load plugins from #{path}"
+    fs.readdir path, (err, files) =>
+      return done err if err
+      async.map files, @loadPluginFromFile.bind(@), (err, result)=>
+        # check if item in array is plugin obj
+        async.filter result, (x, cb)=>
+          cb x?
+        , (plugins)=>
+          done null, plugins
 
   loadPlugins: (done)->
-    debug "try to read plugins in #{pluginPath}"
-    fs.readdir pluginPath, (err, files) ->
-      return done err if err
-      async.each files, readPlugin, (err) ->
+    debug 'loadPlugins'
+    if @plugins_path?
+      @loadPluginsFromPath @plugins_path, (err, plugins)=>
         return done err if err
-        debug "all plugins loaded"
-        done null
+        async.waterfall [
+          (callback)=>
+            @addPlugin plugin for plugin in plugins
+            callback()
+          (callback)=>
+            async.each plugins, @initPlugin.bind(@), callback
+        ], (err)=>
+          done err, @
+    else
+      done null, @
 
-  add: (plugin)->
+  addPlugin: (plugin)->
     debug "add #{plugin.name}"
-    @plugins[plugin.name] = pluginInterface || {}
-    @emit 'add', pluginInterface
-    return pluginInterface
+    plugin.attach @
+    @plugins[plugin.name] = plugin
+    @emit "add::#{plugin.name}", plugin
+    return plugin
 
-  get: (name)->
+  # init each plugin
+  initPlugin: (plugin, done)->
+    debug "init #{plugin.name}"
+    opts = @core.config?.plugins?[plugin.name] or {}
+    plugin.init @core, opts, (err)=>
+      unless err
+        @emit "init::#{plugin.name}", plugin, opts
+      else
+        @emit "error::init::plugin::#{plugin.name}", err
+      done err
+
+  getPlugin: (name)->
     return @plugins[name]
 
-  getAll: ->
+  getAllPlugins: (done)->
     debug "get all plugins"
-    #return clones?
-    return @plugins
-
-module.exports = new PluginService()
+    done null, @plugins

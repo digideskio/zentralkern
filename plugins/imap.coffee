@@ -3,29 +3,65 @@ debug = require('debug')('zentralkern:plugin:imap')
 Imap = require 'imap'
 Q = require 'q'
 
-readMessage = (msg, number) ->
-  deferred = Q.defer()
-  message = {}
+plugin =
+  name: 'imap'
+  version: '0.0.1'
+  attach: (service)->
+    debug 'attach'
+  init: (core, config, done) ->
+    debug 'init', config
+    con = plugin.api.connect config
+    con.catch (err)->
+      console.log err
+    con.then (inbox)->
+      debug "initialized"
+      plugin.api.unread = ->
+        inbox.unread().then (messages) ->
+          console.log messages
+          plugin.imap.end()
+      done null
+  api:
+    connect: (data) ->
+      debug "try to connect..."
+      plugin.imap = imap = new Imap data
+      deferred = Q.defer()
 
-  msg.on 'body', (stream, info) ->
-    buffer = ''
+      imap.once 'ready', ->
+        imap.openBox 'INBOX', true, (err, box) ->
+          return deferred.reject err if err
+          deferred.resolve
+            unread: unread.bind(@, imap)
+            get: get.bind(@, imap)
+            messages: box.messages
 
-    stream.on 'data', (chunk) ->
-      buffer += chunk.toString 'utf8'
+      imap.once 'error', deferred.reject
 
-    stream.once 'end', ->
-      if info.which is 'TEXT'
-        message['body'] = buffer
-      else
-        message['header'] = Imap.parseHeader buffer
+      imap.connect()
+      return deferred.promise
 
-  msg.once 'attributes', (attrs) ->
-    message['attributes'] = attrs
+    readMessage: (msg, number) ->
+      deferred = Q.defer()
+      message = {}
 
-  msg.once 'end', ->
-    deferred.resolve message
+      msg.on 'body', (stream, info) ->
+        buffer = ''
 
-  return deferred.promise
+        stream.on 'data', (chunk) ->
+          buffer += chunk.toString 'utf8'
+
+        stream.once 'end', ->
+          if info.which is 'TEXT'
+            message['body'] = buffer
+          else
+            message['header'] = Imap.parseHeader buffer
+
+      msg.once 'attributes', (attrs) ->
+        message['attributes'] = attrs
+
+      msg.once 'end', ->
+        deferred.resolve message
+
+      return deferred.promise
 
 getMessages = (imap, deferred, selector) ->
   messages = []
@@ -53,25 +89,6 @@ get = (imap, offset = 0, length = 1) ->
 
   return deferred.promise
 
-connect = (data) ->
-  debug "try to connect..."
-  imap = new Imap data
-  deferred = Q.defer()
 
-  imap.once 'ready', ->
-    imap.openBox 'INBOX', true, (err, box) ->
-      return deferred.reject err if err
-      deferred.resolve
-        unread: unread.bind(@, imap)
-        get: get.bind(@, imap)
-        messages: box.messages
 
-  imap.once 'error', deferred.reject
-
-  imap.connect()
-  return deferred.promise
-
-module.exports =
-  name: 'imap'
-  init: (core, config, done) ->
-    done null, connect: connect
+module.exports = plugin
