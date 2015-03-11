@@ -3,6 +3,47 @@ debug = require('debug')('zentralkern:plugin:imap')
 Imap = require 'imap'
 Q = require 'q'
 
+plugin =
+  name: 'imap'
+  version: '0.0.1'
+  attach: (service)->
+    debug 'attach'
+  init: (core, config, done) ->
+    debug 'init', config
+    plugin.config = config
+    debug "initialized"
+    done null
+  api:
+    unread: (params, done)->
+      con = connect plugin.config
+      con.catch (err)->
+        console.log err
+        done err
+      con.then (inbox)->
+        inbox.unread().then (messages) ->
+          msgs = for m in messages
+            { subject: m.header.subject[0] }
+          plugin.imap.end()
+          done null, msgs
+
+connect= (data) ->
+  debug "try to connect..."
+  plugin.imap = imap = new Imap data
+  deferred = Q.defer()
+
+  imap.once 'ready', ->
+    imap.openBox 'INBOX', true, (err, box) ->
+      return deferred.reject err if err
+      deferred.resolve
+        unread: unread.bind(@, imap)
+        get: get.bind(@, imap)
+        messages: box.messages
+
+  imap.once 'error', deferred.reject
+
+  imap.connect()
+  return deferred.promise
+
 readMessage = (msg, number) ->
   deferred = Q.defer()
   message = {}
@@ -53,25 +94,6 @@ get = (imap, offset = 0, length = 1) ->
 
   return deferred.promise
 
-connect = (data) ->
-  debug "try to connect..."
-  imap = new Imap data
-  deferred = Q.defer()
 
-  imap.once 'ready', ->
-    imap.openBox 'INBOX', true, (err, box) ->
-      return deferred.reject err if err
-      deferred.resolve
-        unread: unread.bind(@, imap)
-        get: get.bind(@, imap)
-        messages: box.messages
 
-  imap.once 'error', deferred.reject
-
-  imap.connect()
-  return deferred.promise
-
-module.exports =
-  name: 'imap'
-  init: (core, config, done) ->
-    done null, connect: connect
+module.exports = plugin

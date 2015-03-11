@@ -3,47 +3,63 @@
 debug = require('debug')('zentralkern:cli')
 program = require 'commander'
 pkg = require "#{__dirname}/../package.json"
+fs = require 'fs'
 
-Plugin = null
-Message = null
-Person = null
+zk_config = "#{process.env['HOME']}/.zk"
 
-loadCore = (done)->
-  require("#{__dirname}/../src/core") done
-
-showPlugin = (name, plugin)->
+showPlugin = (plugin)->
   line =
-    name: name
-  line.version = plugin.version() if plugin.version
+    name: plugin.name
+  line.version = plugin.version if plugin.version
   console.log line
 
+showItem = (item)->
+  console.log JSON.stringify item
+
 execPlugin = (core)->
-  {Plugin} = core
-  # register options and commands of plugins
-  plugins = Plugin.getAll()
-  return (name, action, options)->
-    debug "exec #{action} of plugin #{name}"
-    p = Plugin.get(name)
-    for c in p.commands
-      if c.name() == action
-        c.parent.emit action
+  return (name, action, params)->
+    debug "exec #{action} with #{params} from plugin #{name}"
+    plugin = core.plugins.getPlugin name
+    unless action?
+      line =
+        name: plugin.name
+        version: plugin.version
+        api: plugin.api
+      console.log line
+    else
+      if params?
+        params = JSON.parse params
+      plugin.api[action] params, (err, list)->
+        if err
+          console.log err
+        else
+          showItem item for item in list
 
 getAllPlugins = (core)->
-  { Plugin } = core
   return (program)->
     debug "get all installed plugins"
-    plugins = Plugin.getAll()
-    showPlugin name, pluginInterface for name, pluginInterface of plugins
-
+    core.plugins.getAllPlugins (err, plugins)=>
+      showPlugin plugin for name, plugin of plugins
 
 module.exports = (opts)->
+  debug 'exports', opts
 
-  loadCore (err, core)->
-    debug err if err
-    process.exit(1) if err
+  # process.exit(1) if err
+  core = require("#{__dirname}/../src/core")()
 
-    program
-      .version(pkg.version)
+  program
+    .version pkg.version
+
+  program
+    .option '-c, --config [file]', 'path to config file'
+
+  program.parse process.argv
+
+  if fs.existsSync(zk_config)
+    opts = JSON.parse fs.readFileSync(zk_config)
+  opts or= require program.config
+
+  core.init opts, (err, core)->
 
     program
       .command 'plugins'
@@ -51,10 +67,11 @@ module.exports = (opts)->
       .action getAllPlugins core
 
     program
-      .command 'plugin <name> <action>'
+      .command 'plugin <name> [action] [params]'
       .alias 'p'
-      .description 'execute action of plugin'
-      .option '-p, --peppers', 'Add pepper'
+      .description 'run plugin action with params'
       .action execPlugin core
 
-    program.parse(process.argv)
+    program.parse process.argv
+
+    debug 'done'

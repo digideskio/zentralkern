@@ -3,35 +3,34 @@
 debug = require('debug')('zentralkern:core')
 fs = require 'fs'
 async = require 'async'
+EventEmitter = require('eventemitter2').EventEmitter2
 
-pluginPath = "#{__dirname}/../plugins"
+class Core extends EventEmitter
 
-config = require "#{__dirname}/../config/dev.json"
+  constructor: (opts)->
+    debug 'new Core()'
+    @plugins = require("#{__dirname}/plugin_service")()
+    # @persons:  require("#{__dirname}/person_service")()
+    # @messages: require("#{__dirname}/message_service")()
+    super
+      wildcard: true
+      delimiter: '::'
 
-core =
-  Person: require "#{__dirname}/person"
-  Message: require "#{__dirname}/message"
-  Plugin: require "#{__dirname}/plugin"
+  init: (@config, done)->
+    debug 'init'
+    async.parallel
+      plugins:  (cb)=>
+        @plugins.init
+          core: @
+          plugins_path: "#{__dirname}/../plugins" # plugins path
+        , (err)->
+          debug err if err
+          cb err
 
-readPlugin = (name, done) ->
-  debug "#{name}"
-  return done null unless name[-6..] is 'coffee' or name[-2..] is 'js'
-  plugin = require("#{pluginPath}/#{name}")
-  opts = config.plugins[plugin.name]
-  plugin.init core, opts, (err, pluginInterface) ->
-    debug "plugin #{plugin.name} initialized"
-    core.Plugin.add plugin.name, pluginInterface
-    done err, pluginInterface
+    ,(err)=>
+      debug 'initialized'
+      done err, @
 
-loadPlugins = (done)->
-  debug "try to read plugins in #{pluginPath}"
-  fs.readdir pluginPath, (err, files) ->
-    return done err if err
-    async.each files, readPlugin, (err) ->
-      return done err if err
-      debug "all plugins loaded"
-      done null
-
-module.exports = (done)->
-  loadPlugins (err)->
-    done err, core
+module.exports = (opts)->
+  debug 'exports'
+  new Core opts
