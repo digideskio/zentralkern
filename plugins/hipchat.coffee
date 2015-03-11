@@ -3,6 +3,9 @@
 debug = require('debug')('zentralkern:plugin:hipchat')
 hipchat = require 'node-hipchat'
 
+getClient = (api_key)->
+  return new hipchat api_key
+
 plugin =
   name: 'hipchat'
   version: '0.0.1'
@@ -10,35 +13,30 @@ plugin =
   attach: (service)->
     debug 'attach'
 
-  init: (core, opts, done)->
-    debug 'init', opts
-    plugin.client = new hipchat opts.api_key
+  init: (core, config, done)->
+    debug 'init', config
+    plugin.config = config
     plugin.core = core
-    plugin.client.listRooms (res, err)->
-      unless err
-        debug "initialized"
-        plugin.rooms = res.rooms
-      done err
-
-  connected: ->
-    return plugin.client.apikey?
+    plugin.client = getClient config.api_key
+    done null
 
   api:
     rooms: (params, done)->
-      unless plugin.connected()
-        done new Error('Hipchat not connected.')
-      else
-        plugin.client.listRooms (res, err)->
-          done err, res.rooms
+      plugin.client.listRooms (res, err)->
+        done err, res.rooms
 
     room: (params, done)->
-      unless params?
-        done new Error('No params')
+      unless params?.room_id?
+        done new Error('param room_id is required.')
       else
         plugin.client.getHistory params, (res, err)->
           if res?
             done null, res.messages
           else
             done err
+
+    users: (params, done)->
+      plugin.client.listUsers (res, err)->
+        done err, res.users
 
 module.exports = plugin

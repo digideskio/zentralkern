@@ -10,58 +10,63 @@ plugin =
     debug 'attach'
   init: (core, config, done) ->
     debug 'init', config
-    con = plugin.api.connect config
-    con.catch (err)->
-      console.log err
-    con.then (inbox)->
-      debug "initialized"
-      plugin.api.unread = ->
-        inbox.unread().then (messages) ->
-          console.log messages
-          plugin.imap.end()
-      done null
+    plugin.config = config
+    debug "initialized"
+    done null
   api:
-    connect: (data) ->
-      debug "try to connect..."
-      plugin.imap = imap = new Imap data
-      deferred = Q.defer()
+    unread: (params, done)->
+      con = connect plugin.config
+      con.catch (err)->
+        console.log err
+        done err
+      con.then (inbox)->
+        inbox.unread().then (messages) ->
+          msgs = for m in messages
+            { subject: m.header.subject[0] }
+          plugin.imap.end()
+          done null, msgs
 
-      imap.once 'ready', ->
-        imap.openBox 'INBOX', true, (err, box) ->
-          return deferred.reject err if err
-          deferred.resolve
-            unread: unread.bind(@, imap)
-            get: get.bind(@, imap)
-            messages: box.messages
+connect= (data) ->
+  debug "try to connect..."
+  plugin.imap = imap = new Imap data
+  deferred = Q.defer()
 
-      imap.once 'error', deferred.reject
+  imap.once 'ready', ->
+    imap.openBox 'INBOX', true, (err, box) ->
+      return deferred.reject err if err
+      deferred.resolve
+        unread: unread.bind(@, imap)
+        get: get.bind(@, imap)
+        messages: box.messages
 
-      imap.connect()
-      return deferred.promise
+  imap.once 'error', deferred.reject
 
-    readMessage: (msg, number) ->
-      deferred = Q.defer()
-      message = {}
+  imap.connect()
+  return deferred.promise
 
-      msg.on 'body', (stream, info) ->
-        buffer = ''
+readMessage = (msg, number) ->
+  deferred = Q.defer()
+  message = {}
 
-        stream.on 'data', (chunk) ->
-          buffer += chunk.toString 'utf8'
+  msg.on 'body', (stream, info) ->
+    buffer = ''
 
-        stream.once 'end', ->
-          if info.which is 'TEXT'
-            message['body'] = buffer
-          else
-            message['header'] = Imap.parseHeader buffer
+    stream.on 'data', (chunk) ->
+      buffer += chunk.toString 'utf8'
 
-      msg.once 'attributes', (attrs) ->
-        message['attributes'] = attrs
+    stream.once 'end', ->
+      if info.which is 'TEXT'
+        message['body'] = buffer
+      else
+        message['header'] = Imap.parseHeader buffer
 
-      msg.once 'end', ->
-        deferred.resolve message
+  msg.once 'attributes', (attrs) ->
+    message['attributes'] = attrs
 
-      return deferred.promise
+  msg.once 'end', ->
+    deferred.resolve message
+
+  return deferred.promise
 
 getMessages = (imap, deferred, selector) ->
   messages = []
