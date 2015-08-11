@@ -1,34 +1,36 @@
 # file: src/core.coffee
+
+debug = require('debug')('zentralkern:core')
 fs = require 'fs'
 async = require 'async'
+EventEmitter = require('eventemitter2').EventEmitter2
 
-Person = require "#{__dirname}/person"
-Message = require "#{__dirname}/message"
+class Core extends EventEmitter
 
-plugins = {}
-path = "#{__dirname}/../plugins"
-done = {}
+  constructor: (opts)->
+    debug 'new Core()'
+    @plugins = require("#{__dirname}/plugin_service")()
+    # @persons:  require("#{__dirname}/person_service")()
+    # @messages: require("#{__dirname}/message_service")()
+    super
+      wildcard: true
+      delimiter: '::'
 
-# get in the plugins
-fs.readdir path, (err, files) ->
-  return console.log 'err', err if err
+  init: (@config, done)->
+    debug 'init'
+    async.parallel
+      plugins:  (cb)=>
+        @plugins.init
+          core: @
+          plugins_path: "#{__dirname}/../plugins" # plugins path
+        , (err)->
+          debug err if err
+          cb err
 
-  readPlugin = (name, cb) ->
-    return cb() unless name[-6..] is 'coffee' or name[-2..] is 'js'
+    ,(err)=>
+      debug 'initialized'
+      done err, @
 
-    plugin = require "#{path}/#{name}"
-    plugin.init Person, Message, (err, pluginInterface) ->
-      return cb err if err
-
-      console.log "plugin #{plugin.name} initialized"
-      plugins[plugin.name] = pluginInterface || {}
-      cb()
-
-  async.each files, readPlugin, (err) ->
-    return done err if err
-
-    console.log 'plugins loaded'
-    done null, Person, Message, (name) -> return plugins[name]
-
-module.exports = (cb) ->
-  done = cb
+module.exports = (opts)->
+  debug 'exports'
+  new Core opts

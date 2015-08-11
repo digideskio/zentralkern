@@ -1,10 +1,13 @@
+
+debug = require('debug')('zentralkern:plugin:persist')
+
 Datastore = require 'nedb'
 async = require 'async'
 
 dbs = {}
 initDB = (entity, cb) ->
   name = entity.constructor.name.toLowerCase()
-  console.log 'initDB', name
+  debug 'initDB', name
 
   dbs[name] = new Datastore filename: "#{__dirname}/../db/#{name}"
   dbs[name].loadDatabase (err) ->
@@ -17,10 +20,16 @@ initDB = (entity, cb) ->
       entity.on 'add', (data) ->
         dbs[name].insert data
       cb()
-      
+
 module.exports =
   name: 'persist'
-  init: (Person, Message, done) ->
-    async.each [Person, Message], initDB, (err) ->
-      return done err if err
-      done()
+  version: '0.0.1'
+  attach: (service)->
+    debug 'attach'
+
+  init: (core, config, done) ->
+    { persons, messages } = core
+    debug "initialized"
+    done null
+    # async.each [persons, messages], initDB, (err) ->
+    #   done err
